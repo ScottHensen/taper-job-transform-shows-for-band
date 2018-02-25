@@ -8,6 +8,9 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Show {
 
+	private String avg_rating;
+	private int    num_reviews;
+	private int    downloads;
 	private ShowMetadata metadata;
 	
 }

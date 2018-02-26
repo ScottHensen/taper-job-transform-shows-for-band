@@ -12,5 +12,6 @@ import lombok.Data;
 public class IOConfig {
 	
 	private String path;
+	private int    dynamoDbBatchWriteMax;
 	
 }

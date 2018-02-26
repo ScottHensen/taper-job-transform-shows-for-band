@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "io.path",
+    "type": "java.lang.String",
+    "description": "Path to the directory holding i/o files."
+  },
+  {
+    "name": "io.dynamoDbBatchWriteMax",
+    "type": "java.lang.String",
+    "description": "The maximum number of PutRequests that can be processed with a single aws dynamodb batch-write-item command."
+  }
+]}

@@ -4,21 +4,27 @@ buildscript {
 	}
 	repositories {
 		mavenCentral()
+		maven { url 'http://repo.spring.io/plugins-release' }
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 		classpath("org.json:org.json:chargebee-1.0")
-		
+		classpath("org.springframework.build.gradle:propdeps-plugin:0.0.7")
+		classpath("org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}")		
 	}
 }
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'propdeps'
+apply plugin: 'propdeps-eclipse'
+apply plugin: 'jacoco'
 
 group = 'io.taper'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
 	mavenCentral()
@@ -31,4 +37,18 @@ dependencies {
 	compile('org.json:org.json:chargebee-1.0')
 	compileOnly('org.projectlombok:lombok')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	optional('org.springframework.boot:spring-boot-configuration-processor')
 }
+
+compileJava.dependsOn(processResources)
+
+jacocoTestReport {
+  group = "Reporting"
+  reports {
+    xml.enabled = true
+    csv.enabled = false
+    html.enabled = true
+    html.destination "${buildDir}/reports/coverage"
+  }
+}
+

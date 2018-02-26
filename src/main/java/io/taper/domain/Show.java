@@ -8,6 +8,8 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class Show {
 
+	private String bandId;
+	private String posterId;
 	private String avg_rating;
 	private int    num_reviews;
 	private int    downloads;

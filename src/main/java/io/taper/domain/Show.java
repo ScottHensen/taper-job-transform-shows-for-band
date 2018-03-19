@@ -1,5 +1,7 @@
 package io.taper.domain;
 
+import java.util.ArrayList;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;
@@ -13,6 +15,7 @@ public class Show {
 	private String avg_rating;
 	private int    num_reviews;
 	private int    downloads;
-	private ShowMetadata metadata;
+	private ShowMetadata    metadata;
+	private ArrayList<Song> files;
 	
 }

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.taper.config.IOConfig;
 import io.taper.domain.Show;
 import io.taper.domain.ShowMetadata;
+import io.taper.domain.Song;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -84,7 +86,7 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 			throws JSONException, IOException 
 	{
 		JSONObject tableLoadObj = new JSONObject();
-		tableLoadObj.put("TaperShow", putRequestArray);
+		tableLoadObj.put("dev-taper-shows", putRequestArray);  //TODO: make db-name & -env properties
 		
 		FileWriter fileWriter = new FileWriter(fileName);
 		fileWriter.write(tableLoadObj.toString(4));
@@ -95,9 +97,23 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 	private JSONObject buildDynamoPutRequest(Show show) 
 			throws JSONException 
 	{
-		JSONObject   putRequest = new JSONObject();
-		JSONObject   itemObj    = new JSONObject();
-		ShowMetadata meta       = show.getMetadata();
+		Comparator<Song> comp   = Comparator.comparing(Song::getTrack, Comparator.nullsLast(Comparator.naturalOrder()))
+								 		    .thenComparing(Song::getName);
+		//TODO:
+		// If we get shows with no flacs, we need to look for Ogg Vorbis or something	
+		ArrayList<Song> files   = show.getFiles();
+		ArrayList<Song> setList = (ArrayList<Song>) files.stream()
+										  .filter(file -> ".FLAC".equals(file.getName().toUpperCase()
+												  				 			 .substring(Math.max(0,  file.getName().length() - 5))))
+										  .sorted(comp)
+										  .collect(Collectors.toList());
+		
+		log.debug("setList=" + String.valueOf(setList));
+		
+		ShowMetadata    meta       = show.getMetadata();
+		
+		JSONObject      putRequest = new JSONObject();
+		JSONObject      itemObj    = new JSONObject();
 		
 		HashMap<String, HashMap<String,String>> strHashMap = new HashMap<String, HashMap<String, String>>();
 		
@@ -119,6 +135,7 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 		strHashMap.put("avg_rating",  buildElementHashMap("S", show.getAvg_rating())  );
 		strHashMap.put("num_reviews", buildElementHashMap("N", show.getNum_reviews()) );
 		strHashMap.put("downloads",   buildElementHashMap("N", show.getDownloads())   );
+		strHashMap.put("files",       buildElementHashMap("L", files)                 );
 			
 		itemObj.put("Item", strHashMap);
 		
@@ -135,6 +152,12 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 	}
 
 	protected static HashMap<String, String> buildElementHashMap(String type, int value) {
+		HashMap<String, String> strStrMap = new HashMap<String, String>();
+		strStrMap.put(type, String.valueOf(value));						
+		return strStrMap;
+	}
+
+	protected static HashMap<String, String> buildElementHashMap(String type, ArrayList<Song> value) {
 		HashMap<String, String> strStrMap = new HashMap<String, String>();
 		strStrMap.put(type, String.valueOf(value));						
 		return strStrMap;

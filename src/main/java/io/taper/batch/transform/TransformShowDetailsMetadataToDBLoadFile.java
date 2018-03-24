@@ -104,26 +104,26 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 		
 		HashMap<String, HashMap<String,Object>> strHashMap = new HashMap<String, HashMap<String, Object>>();
 		
-		strHashMap.put("identifier",  buildElementHashMap("S", meta.getIdentifier())            );
-		strHashMap.put("addeddate",   buildElementHashMap("S", meta.getAddeddate())             );
-		strHashMap.put("coverage",    buildElementHashMap("S", meta.getCoverage())              );
-		strHashMap.put("date",        buildElementHashMap("S", meta.getDate())                  );
-		strHashMap.put("mediatype",   buildElementHashMap("S", meta.getMediatype())             );
-		strHashMap.put("title",       buildElementHashMap("S", meta.getTitle())                 );
-		strHashMap.put("venue",       buildElementHashMap("S", meta.getVenue())                 );
-		strHashMap.put("source",      buildElementHashMap("S", meta.getSource())                );
-		strHashMap.put("lineage",     buildElementHashMap("S", meta.getLineage())               );
-		strHashMap.put("taper",       buildElementHashMap("S", meta.getTaper())                 );
-		strHashMap.put("transferer",  buildElementHashMap("S", meta.getTransferer())            );
-		strHashMap.put("runtime",     buildElementHashMap("S", meta.getRuntime())               );
-		strHashMap.put("description", buildElementHashMap("S", meta.getDescription())           );
-		strHashMap.put("bandId",      buildElementHashMap("S", show.getBandId())                );
-		strHashMap.put("posterId",    buildElementHashMap("S", show.getPosterId())              );
-		strHashMap.put("avg_rating",  buildElementHashMap("S", show.getAvg_rating())            );
-		strHashMap.put("num_reviews", buildElementHashMap("N", show.getNum_reviews())           );
-		strHashMap.put("downloads",   buildElementHashMap("N", show.getDownloads())             );
-		strHashMap.put("files",       buildElementHashMap("L", buildListOfSetListSongs(
-																getSetListFromShowFiles(show))) );
+		strHashMap.put("showId",         buildElementHashMap("S", meta.getIdentifier())            );
+		strHashMap.put("addedDate",      buildElementHashMap("S", meta.getAddeddate())             );
+		strHashMap.put("geoLocation",    buildElementHashMap("S", meta.getCoverage())              );
+		strHashMap.put("showDate",       buildElementHashMap("S", meta.getDate())                  );
+		strHashMap.put("mediaType",      buildElementHashMap("S", meta.getMediatype())             );
+		strHashMap.put("title",          buildElementHashMap("S", meta.getTitle())                 );
+		strHashMap.put("venue",          buildElementHashMap("S", meta.getVenue())                 );
+		strHashMap.put("source",         buildElementHashMap("S", meta.getSource())                );
+		strHashMap.put("lineage",        buildElementHashMap("S", meta.getLineage())               );
+		strHashMap.put("taperName",      buildElementHashMap("S", meta.getTaper())                 );
+		strHashMap.put("transfererName", buildElementHashMap("S", meta.getTransferer())            );
+		strHashMap.put("runtime",        buildElementHashMap("S", meta.getRuntime())               );
+		strHashMap.put("description",    buildElementHashMap("S", meta.getDescription())           );
+		strHashMap.put("bandId",         buildElementHashMap("S", show.getBandId())                );
+		strHashMap.put("posterId",       buildElementHashMap("S", show.getPosterId())              );
+		strHashMap.put("avgRating",      buildElementHashMap("S", show.getAvg_rating())            );
+		strHashMap.put("numReviews",     buildElementHashMap("N", show.getNum_reviews())           );
+		strHashMap.put("downloads",      buildElementHashMap("N", show.getDownloads())             );
+		strHashMap.put("tracks",         buildElementHashMap("L", buildListOfSetListSongs(
+										  						   getSetListFromShowFiles(show))) );
 			
 		itemObj.put("Item", strHashMap);	
 		putRequest.put("PutRequest", itemObj);

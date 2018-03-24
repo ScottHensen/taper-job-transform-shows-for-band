@@ -60,12 +60,13 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 		log.info("App started with args =" + commandLineArgs);	
 		log.debug("Band Name =" + bandName);
 		
+		// spin through extracted show files; write a load file for every 25 shows
 		while ( readCnt < showFiles.size() ) {
 			log.debug("readCnt=" + readCnt + " of " + showFiles.size() + ", procCnt=" + procCnt + ", writeCnt" + writeCnt);
 			
 			if (procCnt >= BATCH_WRITE_MAX) {
 				showDBLoadFileName = pathName + "ZDB" + ++writeCnt + "_" + bandName + "_TaperShow.json";
-				writeAwsBatchInsertFile(showDBLoadFileName,putRequestArray);
+				writeAwsBatchLoadFile(showDBLoadFileName,putRequestArray);
 				putRequestArray.clear();
 				procCnt = 0;
 			}
@@ -79,10 +80,10 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 		}
 		
 		showDBLoadFileName = pathName + "ZDB" + ++writeCnt + "_" + bandName + "_TaperShow.json";
-		writeAwsBatchInsertFile(showDBLoadFileName,putRequestArray);
+		writeAwsBatchLoadFile(showDBLoadFileName,putRequestArray);
 	}
 
-	private void writeAwsBatchInsertFile(String fileName, List<JSONObject> putRequestArray) 
+	private void writeAwsBatchLoadFile(String fileName, List<JSONObject> putRequestArray) 
 			throws JSONException, IOException 
 	{
 		JSONObject tableLoadObj = new JSONObject();
@@ -97,69 +98,107 @@ public class TransformShowDetailsMetadataToDBLoadFile implements CommandLineRunn
 	private JSONObject buildDynamoPutRequest(Show show) 
 			throws JSONException 
 	{
-		Comparator<Song> comp   = Comparator.comparing(Song::getTrack, Comparator.nullsLast(Comparator.naturalOrder()))
-								 		    .thenComparing(Song::getName);
-		//TODO:
-		// If we get shows with no flacs, we need to look for Ogg Vorbis or something	
-		ArrayList<Song> files   = show.getFiles();
-		ArrayList<Song> setList = (ArrayList<Song>) files.stream()
-										  .filter(file -> ".FLAC".equals(file.getName().toUpperCase()
-												  				 			 .substring(Math.max(0,  file.getName().length() - 5))))
-										  .sorted(comp)
-										  .collect(Collectors.toList());
+		JSONObject       putRequest = new JSONObject();
+		JSONObject       itemObj    = new JSONObject();
+		ShowMetadata     meta       = show.getMetadata();
 		
-		log.debug("setList=" + String.valueOf(setList));
+		HashMap<String, HashMap<String,Object>> strHashMap = new HashMap<String, HashMap<String, Object>>();
 		
-		ShowMetadata    meta       = show.getMetadata();
-		
-		JSONObject      putRequest = new JSONObject();
-		JSONObject      itemObj    = new JSONObject();
-		
-		HashMap<String, HashMap<String,String>> strHashMap = new HashMap<String, HashMap<String, String>>();
-		
-		strHashMap.put("identifier",  buildElementHashMap("S", meta.getIdentifier())  );
-		strHashMap.put("addeddate",   buildElementHashMap("S", meta.getAddeddate())   );
-		strHashMap.put("coverage",    buildElementHashMap("S", meta.getCoverage())    );
-		strHashMap.put("date",        buildElementHashMap("S", meta.getDate())        );
-		strHashMap.put("mediatype",   buildElementHashMap("S", meta.getMediatype())   );
-		strHashMap.put("title",       buildElementHashMap("S", meta.getTitle())       );
-		strHashMap.put("venue",       buildElementHashMap("S", meta.getVenue())       );
-		strHashMap.put("source",      buildElementHashMap("S", meta.getSource())      );
-		strHashMap.put("lineage",     buildElementHashMap("S", meta.getLineage())     );
-		strHashMap.put("taper",       buildElementHashMap("S", meta.getTaper())       );
-		strHashMap.put("transferer",  buildElementHashMap("S", meta.getTransferer())  );
-		strHashMap.put("runtime",     buildElementHashMap("S", meta.getRuntime())     );
-		strHashMap.put("description", buildElementHashMap("S", meta.getDescription()) );
-		strHashMap.put("bandId",      buildElementHashMap("S", show.getBandId())      );
-		strHashMap.put("posterId",    buildElementHashMap("S", show.getPosterId())    );
-		strHashMap.put("avg_rating",  buildElementHashMap("S", show.getAvg_rating())  );
-		strHashMap.put("num_reviews", buildElementHashMap("N", show.getNum_reviews()) );
-		strHashMap.put("downloads",   buildElementHashMap("N", show.getDownloads())   );
-		strHashMap.put("files",       buildElementHashMap("L", files)                 );
+		strHashMap.put("identifier",  buildElementHashMap("S", meta.getIdentifier())            );
+		strHashMap.put("addeddate",   buildElementHashMap("S", meta.getAddeddate())             );
+		strHashMap.put("coverage",    buildElementHashMap("S", meta.getCoverage())              );
+		strHashMap.put("date",        buildElementHashMap("S", meta.getDate())                  );
+		strHashMap.put("mediatype",   buildElementHashMap("S", meta.getMediatype())             );
+		strHashMap.put("title",       buildElementHashMap("S", meta.getTitle())                 );
+		strHashMap.put("venue",       buildElementHashMap("S", meta.getVenue())                 );
+		strHashMap.put("source",      buildElementHashMap("S", meta.getSource())                );
+		strHashMap.put("lineage",     buildElementHashMap("S", meta.getLineage())               );
+		strHashMap.put("taper",       buildElementHashMap("S", meta.getTaper())                 );
+		strHashMap.put("transferer",  buildElementHashMap("S", meta.getTransferer())            );
+		strHashMap.put("runtime",     buildElementHashMap("S", meta.getRuntime())               );
+		strHashMap.put("description", buildElementHashMap("S", meta.getDescription())           );
+		strHashMap.put("bandId",      buildElementHashMap("S", show.getBandId())                );
+		strHashMap.put("posterId",    buildElementHashMap("S", show.getPosterId())              );
+		strHashMap.put("avg_rating",  buildElementHashMap("S", show.getAvg_rating())            );
+		strHashMap.put("num_reviews", buildElementHashMap("N", show.getNum_reviews())           );
+		strHashMap.put("downloads",   buildElementHashMap("N", show.getDownloads())             );
+		strHashMap.put("files",       buildElementHashMap("L", buildListOfSetListSongs(
+																getSetListFromShowFiles(show))) );
 			
-		itemObj.put("Item", strHashMap);
-		
+		itemObj.put("Item", strHashMap);	
 		putRequest.put("PutRequest", itemObj);
 		
 		return putRequest;		
 	}
 
-	protected static HashMap<String, String> buildElementHashMap(String type, String value) {
-		HashMap<String, String> strStrMap = new HashMap<String, String>();
+	private ArrayList<Song> getSetListFromShowFiles(Show show) 
+	{
+		Comparator<Song> comp   = Comparator
+				  					  .comparing(
+				  							  Song::getTrack, 
+				  							  Comparator.nullsLast(Comparator.naturalOrder()))
+				  					  .thenComparing(
+				  							  Song::getName);
+
+		ArrayList<Song> setList = 
+				(ArrayList<Song>) show.getFiles()
+									  .stream()
+				 					  .filter(file -> ".FLAC".equals(
+				 							  file.getName().toUpperCase()
+				 							      .substring(Math.max(0,  file.getName().length() - 5))))
+									  .sorted(comp)
+									  .collect(Collectors.toList());
+		
+		log.debug("setList.valueOf =" + String.valueOf(setList));
+		//TODO: If we get shows with no flacs, we need to look for Ogg Vorbis or something	
+
+		return setList;
+	}
+
+	private List<JSONObject> buildListOfSetListSongs(ArrayList<Song> setList) 
+	{
+		List<JSONObject> songArray = new ArrayList<>();
+		setList.forEach(n -> {
+			try {
+				songArray.add(buildSong(n));
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+		
+		return songArray;
+	}
+
+	private JSONObject buildSong(Song n) throws JSONException {
+		
+		JSONObject      mapObj    = new JSONObject();
+		HashMap<String, HashMap<String,Object>> strHashMap = new HashMap<String, HashMap<String, Object>>();
+		
+		strHashMap.put("name",    buildElementHashMap("S", n.getName())   );
+		strHashMap.put("track",   buildElementHashMap("S", n.getTrack())  );
+		strHashMap.put("format",  buildElementHashMap("S", n.getFormat()) );
+		strHashMap.put("title",   buildElementHashMap("S", n.getTitle())  );
+		mapObj.put("M", strHashMap);
+		return mapObj;
+	}
+
+	protected static HashMap<String, Object> buildElementHashMap(String type, String value) {
+		HashMap<String, Object> strStrMap = new HashMap<String, Object>();
 		if ( StringUtils.isEmpty(value) ) {value="unknown";}
 		strStrMap.put(type, value);						
 		return strStrMap;
 	}
 
-	protected static HashMap<String, String> buildElementHashMap(String type, int value) {
-		HashMap<String, String> strStrMap = new HashMap<String, String>();
+	protected static HashMap<String, Object> buildElementHashMap(String type, int value) {
+		HashMap<String, Object> strStrMap = new HashMap<String, Object>();
 		strStrMap.put(type, String.valueOf(value));						
 		return strStrMap;
 	}
 
-	protected static HashMap<String, String> buildElementHashMap(String type, ArrayList<Song> value) {
-		HashMap<String, String> strStrMap = new HashMap<String, String>();
-		strStrMap.put(type, String.valueOf(value));						
+	protected static HashMap<String, Object> buildElementHashMap(String type, List<JSONObject> value) {
+		HashMap<String, Object> strStrMap = new HashMap<String, Object>();
+		strStrMap.put(type, value);						
 		return strStrMap;
 	}
 

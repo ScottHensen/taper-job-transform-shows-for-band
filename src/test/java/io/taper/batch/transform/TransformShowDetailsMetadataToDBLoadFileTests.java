@@ -17,7 +17,7 @@ public class TransformShowDetailsMetadataToDBLoadFileTests {
 		String value    = null;
 		String expected = "unknown";
 		// When
-		HashMap<String,String> result = new HashMap<String,String>();
+		HashMap<String,Object> result = new HashMap<String,Object>();
 		result = TransformShowDetailsMetadataToDBLoadFile.buildElementHashMap(type,value);
 		// Then
 		assertThat(result.get(type)).isEqualTo(expected);
@@ -31,7 +31,7 @@ public class TransformShowDetailsMetadataToDBLoadFileTests {
 		String value    = "bar";
 		String expected = "bar";
 		// When
-		HashMap<String,String> result = new HashMap<String,String>();
+		HashMap<String,Object> result = new HashMap<String,Object>();
 		result = TransformShowDetailsMetadataToDBLoadFile.buildElementHashMap(type,value);
 		// Then
 		assertThat(result.get(type)).isEqualTo(expected);
@@ -45,7 +45,7 @@ public class TransformShowDetailsMetadataToDBLoadFileTests {
 		int    value    =  8;
 		String expected = "8";
 		// When
-		HashMap<String,String> result = new HashMap<String,String>();
+		HashMap<String,Object> result = new HashMap<String,Object>();
 		result = TransformShowDetailsMetadataToDBLoadFile.buildElementHashMap(type,value);
 		// Then
 		assertThat(result.get(type)).isEqualTo(expected);
